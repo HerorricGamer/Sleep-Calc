@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sleep Cycle Calculator</title>
+  <style>
+    :root{--bg:#041027;--card:#071730;--accent:#6fb4ff;--muted:#9bb7d9;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{background:linear-gradient(180deg,var(--bg),#021226);color:#e6f3ff;display:flex;align-items:center;justify-content:center;padding:24px}
+
+    .app{width:100%;max-width:720px;background:linear-gradient(180deg, rgba(10,20,35,0.6), rgba(4,16,39,0.6));border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(2,8,18,0.6)}
+    header{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#2a9fff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#01233a}
+    h1{margin:0;font-size:1.15rem}
+    p.lead{margin:6px 0 18px;color:var(--muted);font-size:0.95rem}
+
+    .controls{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--card);padding:14px;border-radius:12px;flex:1;min-width:220px;border:1px solid var(--glass)}
+    label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:6px}
+    input[type=time], select, input[type=number]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:1rem}
+    .row{display:flex;gap:8px}
+    .small{flex:0 0 110px}
+
+    .actions{display:flex;gap:10px;margin-top:12px}
+    button{background:linear-gradient(180deg,var(--accent),#4f9ef0);border:none;padding:10px 14px;border-radius:10px;color:#01233a;font-weight:700;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+
+    .results{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+    .result{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:6px}
+    .time{font-size:1.15rem;font-weight:700;color:var(--accent)}
+    .sub{font-size:0.85rem;color:var(--muted)}
+
+    footer{margin-top:14px;color:var(--muted);font-size:0.85rem;display:flex;justify-content:space-between;align-items:center}
+
+    @media (max-width:520px){.row{flex-direction:column}.small{flex:1}}
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Sleep Cycle Calculator">
+    <header>
+      <div class="logo">Zz</div>
+      <div>
+        <h1>Sleep Cycle Calculator</h1>
+        <p class="lead">Dark, mobile-friendly calculator. Choose bedtime or wake time — get ideal targets based on 90‑minute cycles + fall‑asleep buffer.</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="card">
+        <label>Mode</label>
+        <div class="row">
+          <select id="mode" aria-label="mode">
+            <option value="toWake">I am going to bed (calculate wake times)</option>
+            <option value="toBed">I need to wake up (calculate bedtimes)</option>
+          </select>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <label id="timeLabel">Bedtime</label>
+        <div class="row">
+          <input type="time" id="timeInput" aria-labelledby="timeLabel" />
+          <div class="small">
+            <label>Fall‑asleep buffer (min)</label>
+            <input type="number" id="buffer" min="0" max="60" value="15" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="calc">Calculate</button>
+          <button class="secondary" id="copy">Copy Results</button>
+          <button class="secondary" id="reset">Reset</button>
+        </div>
+
+        <div style="height:8px"></div>
+        <label>Cycles to show</label>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <label class="chip"><input type="checkbox" class="cycle" value="1" />1</label>
+          <label class="chip"><input type="checkbox" class="cycle" value="2" />2</label>
+          <label class="chip"><input type="checkbox" class="cycle" value="3" checked />3</label>
+          <label class="chip"><input type="checkbox" class="cycle" value="4" checked />4</label>
+          <label class="chip"><input type="checkbox" class="cycle" value="5" checked />5</label>
+        </div>
+      </div>
+
+      <div class="card" style="min-width:260px">
+        <label>Preview / Tips</label>
+        <div style="font-size:0.95rem;color:var(--muted);line-height:1.4">
+          • If it takes ~15 min to fall asleep, keep the buffer at 15.\n<br>
+          • For short sleeps aim for 90 min or 3 cycles (4.5 hrs).\n<br>
+          • Use smart‑wake apps if you want detection-based waking.
+        </div>
+
+        <div style="height:12px"></div>
+        <label>Quick presets</label>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="secondary" data-set="23:15">Go to bed 11:15 PM</button>
+          <button class="secondary" data-set="00:30">Go to bed 12:30 AM</button>
+          <button class="secondary" data-set="07:00">Wake at 7:00 AM</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="results" aria-live="polite"></div>
+
+    <footer>
+      <div>Made for you — dark theme. Save as <strong>index.html</strong> and host anywhere.</div>
+      <div>Tip: Host on GitHub Pages or Netlify</div>
+    </footer>
+  </div>
+
+  <script>
+    const modeEl = document.getElementById('mode');
+    const timeInput = document.getElementById('timeInput');
+    const timeLabel = document.getElementById('timeLabel');
+    const bufferEl = document.getElementById('buffer');
+    const calcBtn = document.getElementById('calc');
+    const resultsEl = document.getElementById('results');
+    const copyBtn = document.getElementById('copy');
+    const resetBtn = document.getElementById('reset');
+
+    function minutesToTime(mins){
+      const d = new Date(0);
+      d.setMinutes(mins);
+      const hh = d.getUTCHours().toString().padStart(2,'0');
+      const mm = d.getUTCMinutes().toString().padStart(2,'0');
+      return `${hh}:${mm}`;
+    }
+
+    function formatDisplay(date){
+      return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function parseTimeStringToToday(timeStr){
+      // timeStr like "23:15" or "07:00" -> Date today with that time
+      const [h,m] = timeStr.split(':').map(Number);
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      return d;
+    }
+
+    function addMinutes(date, mins){
+      return new Date(date.getTime() + mins*60000);
+    }
+
+    function clearResults(){ resultsEl.innerHTML = ''; }
+
+    function showResults(items){
+      clearResults();
+      if(items.length===0){ resultsEl.innerHTML='<div style="color:var(--muted)">No results</div>'; return; }
+      items.forEach(it=>{
+        const el = document.createElement('div'); el.className='result';
+        el.innerHTML = `<div class='time'>${it.time}</div><div class='sub'>${it.note}</div>`;
+        resultsEl.appendChild(el);
+      });
+    }
+
+    function getCheckedCycles(){
+      return Array.from(document.querySelectorAll('.cycle')).filter(c=>c.checked).map(c=>Number(c.value));
+    }
+
+    function calculate(){
+      const mode = modeEl.value;
+      const timeVal = timeInput.value;
+      if(!timeVal){ alert('Please pick a time first'); return; }
+      const buffer = Number(bufferEl.value || 15);
+      const cycles = getCheckedCycles();
+      const results = [];
+      if(mode==='toWake'){
+        const bed = parseTimeStringToToday(timeVal);
+        // assume "fall asleep buffer" minutes added to bedtime
+        const sleepStart = addMinutes(bed, buffer);
+        cycles.forEach(cycleCount => {
+          const mins = cycleCount * 90; // minutes of cycles
+          const wake = addMinutes(sleepStart, mins);
+          results.push({time: formatDisplay(wake), note: `${cycleCount} cycle(s) — ${Math.round((buffer+mins)/60*100)/100}h total (incl. buffer)`});
+        });
+      } else {
+        const wake = parseTimeStringToToday(timeVal);
+        cycles.forEach(cycleCount => {
+          const mins = cycleCount * 90;
+          const bed = addMinutes(wake, - (mins + Number(bufferEl.value || 15)));
+          results.push({time: formatDisplay(bed), note: `${cycleCount} cycle(s) — go to bed at this time (incl. ${bufferEl.value}m buffer)`});
+        });
+      }
+      showResults(results);
+    }
+
+    calcBtn.addEventListener('click', calculate);
+
+    modeEl.addEventListener('change', ()=>{
+      const m = modeEl.value;
+      timeLabel.textContent = m==='toWake' ? 'Bedtime' : 'Wake time';
+    });
+
+    copyBtn.addEventListener('click', ()=>{
+      const lines = Array.from(resultsEl.querySelectorAll('.result')).map(r=>r.innerText.replace(/\n/g,' - '));
+      if(lines.length===0){ alert('No results to copy'); return; }
+      navigator.clipboard.writeText(lines.join('\n')).then(()=>{ alert('Results copied to clipboard'); }).catch(()=>{ alert('Copy failed'); });
+    });
+
+    resetBtn.addEventListener('click', ()=>{ timeInput.value=''; bufferEl.value=15; document.querySelectorAll('.cycle').forEach((c,i)=>c.checked = (i>=2 && i<=4)); clearResults(); });
+
+    document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click', e=>{ timeInput.value = e.currentTarget.dataset.set; }));
+
+    // init default: set time input to now rounded to nearest 5
+    (function init(){
+      const now = new Date(); now.setSeconds(0); now.setMilliseconds(0);
+      const m = now.getMinutes();
+      now.setMinutes(Math.round(m/5)*5);
+      timeInput.value = now.toTimeString().slice(0,5);
+    })();
+  </script>
+</body>
+</html>
